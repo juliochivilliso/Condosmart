@@ -1,12 +1,6 @@
--- 00013_bank_config_audit.sql
-
--- Feature 1: Columnas de cuenta bancaria en condominios
-ALTER TABLE condominios
-  ADD COLUMN IF NOT EXISTS banco TEXT,
-  ADD COLUMN IF NOT EXISTS tipo_cuenta TEXT,
-  ADD COLUMN IF NOT EXISTS numero_cuenta TEXT,
-  ADD COLUMN IF NOT EXISTS beneficiario TEXT,
-  ADD COLUMN IF NOT EXISTS rnc TEXT;
+-- 00014_audit_log.sql
+-- Nota: La columna configuracion_pagos JSONB ya existe en condominios (migration 00013).
+-- Esta migración agrega: política RLS de UPDATE en condominios + tabla audit_log.
 
 -- Permitir que el admin de cada condominio actualice sus datos bancarios
 CREATE POLICY "admin puede actualizar su condominio"
