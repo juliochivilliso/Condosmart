@@ -1,6 +1,6 @@
 import React from "react"
 import { NavLink, Outlet, Routes, Route } from "react-router-dom"
-import { LayoutDashboard, Wrench, DollarSign, Activity, Users, Building2, LogOut, UserCog, CreditCard, Layers, BarChart3, FileBarChart2, PlusCircle, Megaphone, CalendarDays, ShieldCheck, Settings } from "lucide-react"
+import { LayoutDashboard, Wrench, DollarSign, Activity, Users, Building2, LogOut, UserCog, CreditCard, Layers, BarChart3, FileBarChart2, PlusCircle, Megaphone, CalendarDays, ShieldCheck, Settings, ClipboardList } from "lucide-react"
 import { useAuth } from "@/context/AuthContext"
 import NotificationsDropdown from "@/components/NotificationsDropdown"
 import Dashboard from "@/pages/Dashboard"
@@ -22,6 +22,7 @@ import Anuncios from "@/pages/Anuncios"
 import Reservas from "@/pages/Reservas"
 import Visitantes from "@/pages/Visitantes"
 import Configuracion from "@/pages/Configuracion"
+import Auditoria from "@/pages/Auditoria"
 import UpdatePassword from "@/pages/UpdatePassword"
 import ProtectedRoute from "@/components/ProtectedRoute"
 import {
@@ -48,6 +49,7 @@ const navLinksAdminCondominio = [
   { to: "/planes",         label: "Mi Plan",        icon: Layers },
   { to: "/visitantes",     label: "Visitantes",     icon: ShieldCheck },
   { to: "/configuracion",  label: "Configuración",  icon: Settings },
+  { to: "/auditoria",      label: "Auditoría",      icon: ClipboardList },
 ]
 
 const navLinksSuperAdmin = [
@@ -187,6 +189,7 @@ function App() {
             <Route path="suscripcion/pago" element={<PagoSuscripcion />} />
             <Route path="visitantes"       element={<Visitantes />} />
             <Route path="configuracion"    element={<Configuracion />} />
+            <Route path="auditoria"        element={<Auditoria />} />
           </Route>
 
           <Route element={<ProtectedRoute allowedRoles={['super_admin']} />}>
