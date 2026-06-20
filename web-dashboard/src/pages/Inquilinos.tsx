@@ -24,6 +24,7 @@ type CsvRow = {
   email: string
   telefono?: string
   numero_apartamento?: string
+  bloque?: string
 }
 
 type ImportResult = {
@@ -236,6 +237,10 @@ export default function Inquilinos() {
     Papa.parse<CsvRow>(csvFile, {
       header: true,
       skipEmptyLines: true,
+      error: () => {
+        setImportResult({ importados: 0, saltados: 0, errores: 1, detalle: ["Error al leer el archivo CSV."] })
+        setImporting(false)
+      },
       complete: async (results) => {
         const filas = results.data
         let importados = 0
@@ -245,20 +250,22 @@ export default function Inquilinos() {
 
         try {
           // 1. Obtener emails existentes en el condominio
-          const { data: existentes } = await supabase
+          const { data: existentes, error: existErr } = await supabase
             .from("usuarios")
             .select("email")
             .eq("condominio_id", CONDOMINIO_ID)
+          if (existErr) throw existErr
           const emailsExistentes = new Set((existentes ?? []).map((u: any) => u.email.toLowerCase()))
 
-          // 2. Obtener unidades del condominio para mapear numero_apartamento → unidad_id
-          const { data: unidadesData } = await supabase
+          // 2. Obtener unidades del condominio para mapear numero_apartamento + bloque → unidad_id
+          const { data: unidadesData, error: unidErr } = await supabase
             .from("unidades")
-            .select("id, numero_apartamento")
+            .select("id, numero_apartamento, bloque")
             .eq("condominio_id", CONDOMINIO_ID)
+          if (unidErr) throw unidErr
           const unidadesMap: Record<string, string> = {}
           for (const u of (unidadesData ?? [])) {
-            unidadesMap[u.numero_apartamento] = u.id
+            unidadesMap[`${u.numero_apartamento}-${u.bloque ?? ''}`] = u.id
           }
 
           // 3. Procesar filas
@@ -279,7 +286,7 @@ export default function Inquilinos() {
             }
 
             const unidad_id = fila.numero_apartamento?.trim()
-              ? unidadesMap[fila.numero_apartamento.trim()] ?? null
+              ? unidadesMap[`${fila.numero_apartamento?.trim()}-${fila.bloque?.trim() ?? ''}`] ?? null
               : null
 
             const { error: insErr } = await supabase.from("usuarios").insert({
@@ -302,6 +309,7 @@ export default function Inquilinos() {
           }
         } catch (err: any) {
           detalle.push(`Error general: ${err.message}`)
+          errores++
         }
 
         setImportResult({ importados, saltados, errores, detalle })
@@ -437,7 +445,7 @@ export default function Inquilinos() {
       </Card>
 
       {/* Dialog: Importar CSV */}
-      <Dialog open={csvOpen} onOpenChange={v => { if (!v) { setCsvOpen(false); setCsvFile(null); setCsvPreview([]); setImportResult(null) } }}>
+      <Dialog open={csvOpen} onOpenChange={v => { if (!v) { setCsvOpen(false); setCsvFile(null); setCsvPreview([]); setImportResult(null); setImporting(false) } }}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>Importar Inquilinos desde CSV</DialogTitle>
@@ -512,11 +520,9 @@ export default function Inquilinos() {
                   <span className="flex items-center gap-1 text-xs text-yellow-400 bg-yellow-500/10 border border-yellow-500/20 rounded-md px-3 py-1.5">
                     {importResult.saltados} saltados (duplicados)
                   </span>
-                  {importResult.errores > 0 && (
-                    <span className="flex items-center gap-1 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-1.5">
-                      <XCircle className="h-3.5 w-3.5" />{importResult.errores} errores
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-md px-3 py-1.5">
+                    <XCircle className="h-3.5 w-3.5" />{importResult.errores} errores
+                  </span>
                 </div>
                 {importResult.detalle.length > 0 && (
                   <div className="max-h-32 overflow-y-auto bg-secondary/20 rounded-md p-2 text-xs text-muted-foreground space-y-0.5">
