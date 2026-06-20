@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, useMemo } from "react"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/context/AuthContext"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,7 +14,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   DollarSign, Plus, Loader2, AlertCircle, CheckCircle2,
-  Clock, Upload, FileText, AlertTriangle, User, ShieldCheck
+  Clock, Upload, FileText, AlertTriangle, User, ShieldCheck,
+  ChevronDown, ChevronUp, TrendingDown
 } from "lucide-react"
 import PaymentGateway, { type BancoCuenta } from "@/components/PaymentGateway"
 
@@ -448,6 +449,33 @@ export default function Cobros() {
   const totalCobrado   = pagadas.reduce((a, t) => a + Number(t.monto), 0)
   const totalVencido   = vencidas.reduce((a, t) => a + Number(t.monto) + Number(t.interes_mora ?? 0), 0)
 
+  type UnidadMorosa = {
+    unidad: string
+    totalDeuda: number
+    totalMora: number
+    cuotasVencidas: number
+    diasMaxVencido: number
+  }
+
+  const unidadesMorosas: UnidadMorosa[] = useMemo(() => {
+    const hoy = new Date()
+    const grouped: Record<string, UnidadMorosa> = {}
+    for (const t of vencidas) {
+      const key = t.unidad_numero ?? t.unidad_id
+      const dias = Math.floor((hoy.getTime() - new Date(t.fecha_vencimiento).getTime()) / (1000 * 60 * 60 * 24))
+      if (!grouped[key]) {
+        grouped[key] = { unidad: key, totalDeuda: 0, totalMora: 0, cuotasVencidas: 0, diasMaxVencido: 0 }
+      }
+      grouped[key].totalDeuda += Number(t.monto)
+      grouped[key].totalMora += Number(t.interes_mora ?? 0)
+      grouped[key].cuotasVencidas += 1
+      grouped[key].diasMaxVencido = Math.max(grouped[key].diasMaxVencido, dias)
+    }
+    return Object.values(grouped).sort((a, b) => b.totalDeuda - a.totalDeuda)
+  }, [vencidas])
+
+  const [mostrarMorosidad, setMostrarMorosidad] = useState(true)
+
   const aniosDisponibles = Array.from({ length: 3 }, (_, i) => String(new Date().getFullYear() - 1 + i))
 
   function TxTable({ items, showPagar, isVerificacion }: { items: Transaccion[]; showPagar?: boolean; isVerificacion?: boolean }) {
@@ -612,6 +640,92 @@ export default function Cobros() {
           </CardContent>
         </Card>
       </div>
+
+      {profile?.rol === 'admin_condominio' && unidadesMorosas.length > 0 && (
+        <Card className="border-red-500/20 bg-red-500/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <TrendingDown className="h-4 w-4 text-red-400" />
+                <CardTitle className="text-sm font-medium text-red-400">
+                  Resumen de Morosidad — {unidadesMorosas.length} unidad(es) en mora
+                </CardTitle>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={calcularMora}
+                  disabled={calculandoMora}
+                  className="text-xs text-red-400 hover:text-red-300 h-7 px-2"
+                >
+                  {calculandoMora ? <Loader2 className="h-3 w-3 animate-spin" /> : "Actualizar mora"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setMostrarMorosidad(p => !p)}
+                  className="h-7 w-7 p-0"
+                >
+                  {mostrarMorosidad
+                    ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+                    : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3 pt-2">
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Total adeudado</p>
+                <p className="text-sm font-bold text-red-400">
+                  RD${unidadesMorosas.reduce((s, u) => s + u.totalDeuda, 0).toLocaleString('es-DO')}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Total en mora</p>
+                <p className="text-sm font-bold text-orange-400">
+                  RD${unidadesMorosas.reduce((s, u) => s + u.totalMora, 0).toLocaleString('es-DO')}
+                </p>
+              </div>
+              <div className="text-center">
+                <p className="text-xs text-muted-foreground">Cuotas vencidas</p>
+                <p className="text-sm font-bold text-yellow-400">
+                  {unidadesMorosas.reduce((s, u) => s + u.cuotasVencidas, 0)}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          {mostrarMorosidad && (
+            <CardContent className="pt-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border/50 text-muted-foreground">
+                      <th className="text-left py-2 pr-3">Unidad</th>
+                      <th className="text-right py-2 pr-3">Cuotas</th>
+                      <th className="text-right py-2 pr-3">Deuda</th>
+                      <th className="text-right py-2 pr-3">Mora</th>
+                      <th className="text-right py-2">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {unidadesMorosas.map(u => (
+                      <tr key={u.unidad} className="border-b border-border/20 hover:bg-red-500/5">
+                        <td className="py-2 pr-3 font-medium">Apt. {u.unidad}</td>
+                        <td className="py-2 pr-3 text-right text-yellow-400">{u.cuotasVencidas}</td>
+                        <td className="py-2 pr-3 text-right">RD${u.totalDeuda.toLocaleString('es-DO')}</td>
+                        <td className="py-2 pr-3 text-right text-orange-400">RD${u.totalMora.toLocaleString('es-DO')}</td>
+                        <td className="py-2 text-right font-bold text-red-400">
+                          RD${(u.totalDeuda + u.totalMora).toLocaleString('es-DO')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          )}
+        </Card>
+      )}
 
       <Card>
         <CardContent className="p-0">
