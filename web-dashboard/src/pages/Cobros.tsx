@@ -160,7 +160,7 @@ export default function Cobros() {
             fecha_vencimiento: tx.fecha_vencimiento,
             capture_id: capId,
             comprobante_url: compUrl,
-            condominio_nombre: "Residencial Las Palmas"
+            condominio_nombre: profile?.condominio_nombre ?? ''
           }
         }
       })
@@ -388,7 +388,8 @@ export default function Cobros() {
           titulo: "Comprobante de Pago Rechazado",
           mensaje: `Tu comprobante de transferencia para '${tx.concepto}' fue rechazado. ${motivo ? `Detalle: ${motivo}` : "Por favor sube una captura válida."}`,
           tipo: "alerta",
-          prioridad: "alta"
+          prioridad: "alta",
+          canal: "inapp"
         })
       }
 
@@ -411,7 +412,7 @@ export default function Cobros() {
   // ── Estado de cuenta ────────────────────────────────────────────────────────
   async function verEstadoCuenta(tx: Transaccion) {
     setLoadingCuenta(true)
-    setCuentaLabel(`Apt {tx.unidad_numero}`)
+    setCuentaLabel(`Apt ${tx.unidad_numero}`)
     setCuentaUnidad([])
     try {
       const { data } = await supabase
