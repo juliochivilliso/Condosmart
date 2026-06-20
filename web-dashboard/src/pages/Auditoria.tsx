@@ -43,7 +43,7 @@ export default function Auditoria() {
           .order("created_at", { ascending: false })
           .limit(100)
         if (err) throw err
-        setEntries((data ?? []) as AuditEntry[])
+        setEntries((data ?? []) as unknown as AuditEntry[])
       } catch {
         setError("No se pudo cargar el log de auditoría.")
       } finally {
