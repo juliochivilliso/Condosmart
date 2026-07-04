@@ -4,7 +4,7 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2 font-bold text-lg">
+        <div className="font-display flex items-center gap-2 text-lg font-semibold tracking-tight">
           <Building2 className="h-5 w-5 text-primary" />
           CondoSmart
         </div>
@@ -14,7 +14,7 @@ export default function Header() {
         </nav>
         <a
           href="#contacto"
-          className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
+          className="inline-flex items-center justify-center rounded bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/20 hover:bg-primary/90"
         >
           Solicitar demo
         </a>

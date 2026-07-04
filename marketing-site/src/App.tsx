@@ -11,6 +11,7 @@ import Footer from "@/components/Footer"
 export default function App() {
   return (
     <div className="min-h-screen">
+      <div className="grain-overlay" aria-hidden="true" />
       <Header />
       <Hero />
       <ProblemSection />

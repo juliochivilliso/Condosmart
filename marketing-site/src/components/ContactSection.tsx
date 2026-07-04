@@ -69,16 +69,19 @@ export default function ContactSection() {
 
   if (sent) {
     return (
-      <section id="contacto" className="mx-auto max-w-2xl px-6 py-24 text-center">
-        <h2 className="text-2xl font-bold">¡Listo! Recibimos tu solicitud.</h2>
-        <p className="mt-2 text-muted-foreground">Te contactaremos pronto para coordinar tu demo.</p>
+      <section id="contacto" className="dark bg-background py-24 text-center text-foreground">
+        <div className="mx-auto max-w-2xl px-6">
+          <h2 className="font-display text-2xl font-semibold">¡Listo! Recibimos tu solicitud.</h2>
+          <p className="mt-2 text-muted-foreground">Te contactaremos pronto para coordinar tu demo.</p>
+        </div>
       </section>
     )
   }
 
   return (
-    <section id="contacto" className="mx-auto max-w-2xl px-6 py-24">
-      <h2 className="mb-8 text-center text-3xl font-bold">Solicita tu demo</h2>
+    <section id="contacto" className="dark bg-background py-24 text-foreground">
+      <div className="mx-auto max-w-2xl px-6">
+      <h2 className="font-display mb-8 text-center text-3xl font-semibold">Solicita tu demo</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="nombre">Nombre completo</Label>
@@ -131,6 +134,7 @@ export default function ContactSection() {
           {sending ? "Enviando..." : "Solicitar demo"}
         </Button>
       </form>
+      </div>
     </section>
   )
 }

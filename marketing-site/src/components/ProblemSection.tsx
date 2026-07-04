@@ -1,7 +1,7 @@
 export default function ProblemSection() {
   return (
     <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-      <h2 className="text-2xl font-bold md:text-3xl">
+      <h2 className="font-display text-2xl font-semibold md:text-3xl">
         ¿Sigues cobrando el mantenimiento por WhatsApp y anotando la mora en una hoja de cálculo?
       </h2>
       <p className="mt-4 text-muted-foreground">

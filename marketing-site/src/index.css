@@ -3,33 +3,39 @@
 @tailwind utilities;
 
 @layer base {
+  /* "Paper" — ledger-paper theme for light sections */
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --primary: 221.2 83.2% 53.3%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --border: 214.3 31.8% 91.4%;
-    --radius: 0.5rem;
+    --background: 49 23% 91%;
+    --foreground: 206 32% 13%;
+    --card: 45 25% 97%;
+    --card-foreground: 206 32% 13%;
+    --primary: 36 79% 57%;
+    --primary-foreground: 206 32% 13%;
+    --secondary: 49 18% 85%;
+    --secondary-foreground: 206 32% 13%;
+    --muted: 49 15% 87%;
+    --muted-foreground: 206 15% 38%;
+    --border: 45 15% 80%;
+    --destructive: 0 51% 46%;
+    --destructive-foreground: 45 25% 97%;
+    --radius: 0.25rem;
   }
 
+  /* "Blueprint" — cyanotype theme for hero / final CTA sections */
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 217.2 32.6% 12%;
-    --card-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --border: 217.2 32.6% 17.5%;
+    --background: 204 49% 21%;
+    --foreground: 47 39% 93%;
+    --card: 204 40% 26%;
+    --card-foreground: 47 39% 93%;
+    --primary: 36 79% 57%;
+    --primary-foreground: 206 32% 13%;
+    --secondary: 204 35% 28%;
+    --secondary-foreground: 47 39% 93%;
+    --muted: 204 30% 30%;
+    --muted-foreground: 47 20% 75%;
+    --border: 204 25% 35%;
+    --destructive: 6 62% 62%;
+    --destructive-foreground: 206 32% 13%;
   }
 }
 
@@ -38,6 +44,43 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased font-sans;
   }
+}
+
+/* Blueprint draw-on animation for the hero elevation illustration */
+@layer utilities {
+  .blueprint-draw path,
+  .blueprint-draw rect,
+  .blueprint-draw line {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: blueprint-draw 2.2s ease-out forwards;
+  }
+}
+
+@keyframes blueprint-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blueprint-draw path,
+  .blueprint-draw rect,
+  .blueprint-draw line {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Subtle paper-grain texture, reinforcing the ledger-paper concept across both themes */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
