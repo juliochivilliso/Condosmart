@@ -23,6 +23,12 @@ interface EmailRequest {
   };
 }
 
+const SALES_EMAIL = 'ventas@condosmart.do'
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;')
+}
+
 function getHtmlTemplate(type: string, data: any): string {
   const brandColor = "#1A365D";
   const formatMonto = (m: number) => `RD$ ${Number(m).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`;
@@ -123,23 +129,23 @@ function getHtmlTemplate(type: string, data: any): string {
             <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Nombre:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${data.nombre_completo}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${escapeHtml(data.nombre_completo)}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Condominio:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${data.condominio_nombre}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${escapeHtml(data.condominio_nombre)}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Email:</td>
-                <td style="padding: 6px 0; text-align: right;">${data.email || '—'}</td>
+                <td style="padding: 6px 0; text-align: right;">${data.email ? escapeHtml(data.email) : '—'}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Teléfono:</td>
-                <td style="padding: 6px 0; text-align: right;">${data.telefono || '—'}</td>
+                <td style="padding: 6px 0; text-align: right;">${data.telefono ? escapeHtml(data.telefono) : '—'}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Unidades aprox.:</td>
-                <td style="padding: 6px 0; text-align: right;">${data.num_unidades_aprox || '—'}</td>
+                <td style="padding: 6px 0; text-align: right;">${data.num_unidades_aprox ? escapeHtml(data.num_unidades_aprox) : '—'}</td>
               </tr>
             </table>
           </div>
@@ -170,7 +176,8 @@ serve(async (req) => {
 
   try {
     const body: EmailRequest = await req.json()
-    const { type, to, data } = body
+    const { type, data } = body
+    const to = type === 'nuevo_lead' ? SALES_EMAIL : body.to
 
     const subjectMap = {
       pago_confirmado: `Confirmación de Pago - ${data.concepto}`,
