@@ -10,6 +10,7 @@ const corsHeaders = {
 const CATEGORIA_MAP: Record<string, string> = {
   'plomería': 'Plomería',
   'plomeria': 'Plomería',
+  'fontaneria': 'Plomería',
   'electricidad': 'Electricidad',
   'pintura': 'Pintura',
   'carpintería': 'Carpintería',
@@ -17,6 +18,11 @@ const CATEGORIA_MAP: Record<string, string> = {
   'jardinería': 'Jardinería',
   'jardineria': 'Jardinería',
   'limpieza': 'Limpieza',
+  'cerrajeria': 'Cerrajería',
+  'climatizacion': 'Aire Acondicionado',
+  'aire acondicionado': 'Aire Acondicionado',
+  'albañilería': 'Albañilería',
+  'albanileria': 'Albañilería',
 }
 
 serve(async (req) => {
