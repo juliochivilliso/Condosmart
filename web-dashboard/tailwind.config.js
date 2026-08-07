@@ -7,6 +7,14 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        sans: ["IBM Plex Sans", "system-ui", "sans-serif"],
+        display: ["Space Grotesk", "system-ui", "sans-serif"],
+        mono: ["IBM Plex Mono", "monospace"],
+      },
+      boxShadow: {
+        "glow-primary": "0 4px 16px -2px hsl(var(--primary) / 0.25)",
+      },
       colors: {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",

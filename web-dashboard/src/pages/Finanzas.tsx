@@ -103,7 +103,7 @@ export default function Finanzas() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Finanzas</h2>
+        <h2 className="text-3xl font-display font-bold tracking-tight">Finanzas</h2>
         <p className="text-muted-foreground mt-1">Resumen financiero del condominio</p>
       </div>
 

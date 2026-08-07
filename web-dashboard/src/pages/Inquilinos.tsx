@@ -341,7 +341,7 @@ export default function Inquilinos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Inquilinos</h2>
+          <h2 className="text-3xl font-display font-bold tracking-tight">Inquilinos</h2>
           <p className="text-muted-foreground mt-1">{inquilinos.length} residentes registrados</p>
         </div>
         <div className="flex gap-2">

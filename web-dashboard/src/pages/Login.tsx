@@ -66,7 +66,7 @@ export default function Login() {
         <div className="flex flex-col items-center mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-10 w-10 text-primary" />
-            <span className="text-4xl font-bold text-foreground tracking-tighter">CondoSmart</span>
+            <span className="text-4xl font-display font-bold text-foreground tracking-tighter">CondoSmart</span>
           </div>
           <p className="text-muted-foreground text-sm font-medium">Inicia sesión para continuar</p>
         </div>

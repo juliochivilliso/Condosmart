@@ -112,7 +112,7 @@ export default function Planes() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Planes de Suscripción</h2>
+        <h2 className="text-3xl font-display font-bold tracking-tight">Planes de Suscripción</h2>
         <p className="text-muted-foreground mt-1">
           {isAdmin
             ? "Selecciona el plan que mejor se adapte a tu residencial."

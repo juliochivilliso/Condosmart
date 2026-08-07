@@ -98,7 +98,7 @@ export default function Configuracion() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Configuración</h2>
+        <h2 className="text-3xl font-display font-bold tracking-tight">Configuración</h2>
         <p className="text-muted-foreground mt-1">Datos bancarios para pagos por transferencia</p>
       </div>
 

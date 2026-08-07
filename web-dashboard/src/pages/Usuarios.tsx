@@ -209,7 +209,7 @@ export default function Usuarios() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Usuarios</h2>
+          <h2 className="text-3xl font-display font-bold tracking-tight">Usuarios</h2>
           <p className="text-muted-foreground mt-1">Gestión de accesos a la plataforma</p>
         </div>
         <Dialog open={open} onOpenChange={v => { setOpen(v); if (!v) resetForm() }}>

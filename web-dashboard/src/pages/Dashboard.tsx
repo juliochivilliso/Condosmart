@@ -135,7 +135,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Salud del Condominio</h2>
+        <h2 className="text-3xl font-display font-bold tracking-tight">Salud del Condominio</h2>
         <p className="text-muted-foreground mt-1">Resumen ejecutivo del mes actual.</p>
       </div>
 

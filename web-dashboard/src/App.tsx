@@ -81,10 +81,11 @@ function Layout() {
     : "AD"
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans text-foreground">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row font-sans text-foreground relative">
+      <div className="grain-overlay" aria-hidden="true" />
       {/* Sidebar */}
       <aside className="w-full md:w-64 border-r bg-card text-card-foreground p-4 flex flex-col gap-2 shrink-0">
-        <div className="font-bold text-2xl text-primary mb-2 flex items-center gap-2">
+        <div className="font-display font-bold text-2xl text-primary mb-2 flex items-center gap-2">
           <Building2 className="h-6 w-6" />
           CondoSmart
         </div>
@@ -129,7 +130,7 @@ function Layout() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Header */}
         <header className="flex justify-between items-center px-6 lg:px-8 py-4 border-b bg-card/50 backdrop-blur-sm shrink-0">
-          <h1 className="text-xl font-semibold tracking-tight">Sistema de Gestión</h1>
+          <h1 className="text-xl font-display font-semibold tracking-tight">Sistema de Gestión</h1>
           <div className="flex items-center gap-4">
             <NotificationsDropdown />
 

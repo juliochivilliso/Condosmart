@@ -174,7 +174,7 @@ export default function MetricasSaaS() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Métricas SaaS</h2>
+        <h2 className="text-3xl font-display font-bold tracking-tight">Métricas SaaS</h2>
         <p className="text-muted-foreground mt-1">
           Indicadores clave del negocio en tiempo real.
         </p>

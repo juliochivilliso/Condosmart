@@ -144,7 +144,7 @@ export default function IotControl() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">IoT Control</h2>
+          <h2 className="text-3xl font-display font-bold tracking-tight">IoT Control</h2>
           <p className="text-muted-foreground mt-1">{activos} activos · {inactivos} inactivos · {dispositivos.length} dispositivos</p>
         </div>
         <div className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-full border ${socketConnected ? "bg-green-500/10 border-green-500/30 text-green-400" : "bg-secondary border-border text-muted-foreground"}`}>

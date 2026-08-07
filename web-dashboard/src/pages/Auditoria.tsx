@@ -63,7 +63,7 @@ export default function Auditoria() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight">Auditoría</h2>
+        <h2 className="text-3xl font-display font-bold tracking-tight">Auditoría</h2>
         <p className="text-muted-foreground mt-1">Registro de acciones administrativas</p>
       </div>
 
