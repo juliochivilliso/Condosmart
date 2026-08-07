@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "525332268078",
+    "project_id": "condosmart-mobile-2025",
+    "storage_bucket": "condosmart-mobile-2025.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:525332268078:android:a3522458f1be55bf368bbf",
+        "android_client_info": {
+          "package_name": "com.condosmart.condosmart_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDRRKfzwoWwqa77DbV5I-ObWz7ttOj-N3E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
