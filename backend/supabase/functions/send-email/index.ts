@@ -1,9 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { getCorsHeaders } from "../_shared/cors.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders
 
 interface EmailRequest {
   type: 'pago_confirmado' | 'pendiente_verificacion' | 'mora_aplicada' | 'nuevo_lead';
@@ -36,7 +34,7 @@ function getHtmlTemplate(type: string, data: any): string {
   const header = `
     <div style="background-color: ${brandColor}; padding: 24px; text-align: center; border-radius: 8px 8px 0 0;">
       <h1 style="color: white; margin: 0; font-family: sans-serif; font-size: 24px;">CondoSmart</h1>
-      <p style="color: #93C5FD; margin: 4px 0 0 0; font-family: sans-serif; font-size: 14px;">${data.condominio_nombre || 'Tu Residencial'}</p>
+      <p style="color: #93C5FD; margin: 4px 0 0 0; font-family: sans-serif; font-size: 14px;">${escapeHtml(data.condominio_nombre || 'Tu Residencial')}</p>
     </div>
   `;
 
@@ -53,14 +51,14 @@ function getHtmlTemplate(type: string, data: any): string {
         ${header}
         <div style="padding: 24px; color: #1F2937;">
           <h2 style="color: #10B981; margin-top: 0;">¡Pago Confirmado!</h2>
-          <p>Hola <strong>${data.nombre_completo}</strong>,</p>
+          <p>Hola <strong>${escapeHtml(data.nombre_completo)}</strong>,</p>
           <p>Hemos registrado y conciliado exitosamente tu pago. A continuación los detalles:</p>
           
           <div style="background-color: #F3F4F6; padding: 16px; border-radius: 8px; margin: 20px 0;">
             <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Concepto:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${data.concepto}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${escapeHtml(data.concepto)}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Monto Pagado:</td>
@@ -69,7 +67,7 @@ function getHtmlTemplate(type: string, data: any): string {
               ${data.capture_id ? `
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Capture ID:</td>
-                <td style="padding: 6px 0; font-family: monospace; text-align: right;">${data.capture_id}</td>
+                <td style="padding: 6px 0; font-family: monospace; text-align: right;">${escapeHtml(data.capture_id)}</td>
               </tr>
               ` : ''}
               <tr>
@@ -92,14 +90,14 @@ function getHtmlTemplate(type: string, data: any): string {
         ${header}
         <div style="padding: 24px; color: #1F2937;">
           <h2 style="color: #3B82F6; margin-top: 0;">Transferencia en Verificación</h2>
-          <p>Hola <strong>${data.nombre_completo}</strong>,</p>
+          <p>Hola <strong>${escapeHtml(data.nombre_completo)}</strong>,</p>
           <p>Hemos recibido los datos de tu transferencia bancaria. Un administrador residencial validará el comprobante a la brevedad.</p>
           
           <div style="background-color: #F3F4F6; padding: 16px; border-radius: 8px; margin: 20px 0;">
             <table style="width: 100%; font-size: 14px; border-collapse: collapse;">
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Concepto:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${data.concepto}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right;">${escapeHtml(data.concepto)}</td>
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Monto:</td>
@@ -107,7 +105,7 @@ function getHtmlTemplate(type: string, data: any): string {
               </tr>
               <tr>
                 <td style="padding: 6px 0; color: #4B5563;">Referencia:</td>
-                <td style="padding: 6px 0; font-weight: bold; text-align: right; font-family: monospace;">${data.referencia || '—'}</td>
+                <td style="padding: 6px 0; font-weight: bold; text-align: right; font-family: monospace;">${escapeHtml(data.referencia || '—')}</td>
               </tr>
             </table>
           </div>
@@ -161,8 +159,8 @@ function getHtmlTemplate(type: string, data: any): string {
       ${header}
       <div style="padding: 24px; color: #1F2937;">
         <h2 style="color: ${brandColor}; margin-top: 0;">Notificación de Pago</h2>
-        <p>Hola <strong>${data.nombre_completo}</strong>,</p>
-        <p>Tienes una actualización sobre la cuota: <strong>${data.concepto}</strong> de monto <strong>${formatMonto(data.monto)}</strong>.</p>
+        <p>Hola <strong>${escapeHtml(data.nombre_completo)}</strong>,</p>
+        <p>Tienes una actualización sobre la cuota: <strong>${escapeHtml(data.concepto)}</strong> de monto <strong>${formatMonto(data.monto)}</strong>.</p>
       </div>
       ${footer}
     </div>
@@ -171,13 +169,38 @@ function getHtmlTemplate(type: string, data: any): string {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders(req) })
   }
 
   try {
     const body: EmailRequest = await req.json()
     const { type, data } = body
     const to = type === 'nuevo_lead' ? SALES_EMAIL : body.to
+
+    // Validar destinatario: solo usuarios del sistema o dominio autorizado
+    if (!to || typeof to !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'El campo to es requerido' }),
+        { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+    if (type !== 'nuevo_lead') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(to)) {
+        return new Response(
+          JSON.stringify({ error: 'Formato de email inválido' }),
+          { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
+        )
+      }
+      const domain = to.split('@')[1]?.toLowerCase() ?? ''
+      const allowedDomains = (Deno.env.get('ALLOWED_EMAIL_DOMAINS') ?? 'condosmart.do,laspalmas.do,gmail.com').split(',').map(d => d.trim().toLowerCase())
+      if (!allowedDomains.includes(domain)) {
+        return new Response(
+          JSON.stringify({ error: 'Destinatario no autorizado' }),
+          { status: 403, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
     const subjectMap = {
       pago_confirmado: `Confirmación de Pago - ${data.concepto}`,
@@ -215,7 +238,7 @@ serve(async (req) => {
       const resData = await res.json()
       return new Response(
         JSON.stringify({ message: 'Email sent successfully via Resend', id: resData.id }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     } else {
       // Graceful fallback - Log to Deno stdout
@@ -225,13 +248,13 @@ serve(async (req) => {
 
       return new Response(
         JSON.stringify({ message: 'Email simulated and logged to stdout (No RESEND_API_KEY set)' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
   } catch (err: any) {
     return new Response(
       JSON.stringify({ error: err.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 })

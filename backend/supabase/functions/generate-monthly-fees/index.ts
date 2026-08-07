@@ -1,25 +1,41 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+import { requireUser } from "../_shared/auth.ts"
+import { getCorsHeaders } from "../_shared/cors.ts"
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: getCorsHeaders(req) })
 
   try {
+    const { condominio_id, mes, anio } = await req.json()
+
+    // Validar input en runtime
+    if (!condominio_id || typeof condominio_id !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'condominio_id debe ser un string' }),
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!Number.isInteger(mes) || mes < 1 || mes > 12) {
+      return new Response(
+        JSON.stringify({ error: 'mes debe ser un entero entre 1 y 12' }),
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+    if (!Number.isInteger(anio) || anio < 2020 || anio > 2100) {
+      return new Response(
+        JSON.stringify({ error: 'anio fuera de rango' }),
+        { status: 400, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Solo admin/super_admin del condominio pueden generar cuotas.
+    await requireUser(req, condominio_id)
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
-
-    const { condominio_id, mes, anio } = await req.json()
-
-    if (!condominio_id || !mes || !anio) {
-      throw new Error('Se requieren condominio_id, mes y anio')
-    }
 
     // 1. Verificar qué unidades ya tienen cuota para este mes
     const inicioMes = `${anio}-${String(mes).padStart(2, '0')}-01`
@@ -50,7 +66,7 @@ serve(async (req) => {
     if (pendientes.length === 0) {
       return new Response(
         JSON.stringify({ message: 'Ya existen cuotas para todas las unidades este mes', generadas: 0, omitidas }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -76,12 +92,13 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ message: `Generadas ${data.length} cuotas con éxito`, generadas: data.length, omitidas, data }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
   } catch (error: any) {
+    const status = error.status ?? 400
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status, headers: { ...getCorsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 })

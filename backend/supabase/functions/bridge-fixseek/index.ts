@@ -1,10 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { getCorsHeaders } from "../_shared/cors.ts"
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+const corsHeaders = getCorsHeaders
 
 // Mapeo de categorías CondoSmart -> FixSeek (Firestore service_categories.name)
 const CATEGORIA_MAP: Record<string, string> = {
@@ -26,7 +24,7 @@ const CATEGORIA_MAP: Record<string, string> = {
 }
 
 serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(req) })
 
   try {
     const supabase = createClient(
@@ -40,14 +38,14 @@ serve(async (req) => {
     if (!shared_secret || shared_secret !== Deno.env.get('BRIDGE_SHARED_SECRET')) {
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 401, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
     if (!ticket_id) {
       return new Response(
         JSON.stringify({ error: 'ticket_id es requerido' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 400, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -62,7 +60,7 @@ serve(async (req) => {
     if (!ticket) {
       return new Response(
         JSON.stringify({ error: 'Ticket no encontrado' }),
-        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 404, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -70,7 +68,7 @@ serve(async (req) => {
     if (ticket.fixseek_request_id) {
       return new Response(
         JSON.stringify({ message: 'Ticket ya vinculado a FixSeek', fixseek_request_id: ticket.fixseek_request_id }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -79,7 +77,7 @@ serve(async (req) => {
     if (!fixseekCategory) {
       return new Response(
         JSON.stringify({ error: `Categoría "${ticket.categoria}" no tiene equivalente en FixSeek` }),
-        { status: 422, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 422, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -90,7 +88,7 @@ serve(async (req) => {
     if (!fixseekUrl) {
       return new Response(
         JSON.stringify({ error: 'FIXSEEK_CLOUD_FUNCTION_URL no configurada' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 500, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -113,7 +111,7 @@ serve(async (req) => {
     if (!fixseekRes.ok) {
       return new Response(
         JSON.stringify({ error: `FixSeek respondió ${fixseekRes.status}: ${fixseekBody.error ?? fixseekRes.statusText}` }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -121,7 +119,7 @@ serve(async (req) => {
     if (!requestId) {
       return new Response(
         JSON.stringify({ error: 'FixSeek no devolvió requestId' }),
-        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 502, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
       )
     }
 
@@ -139,12 +137,12 @@ serve(async (req) => {
 
     return new Response(
       JSON.stringify({ message: 'Ticket enviado a FixSeek', fixseek_request_id: requestId }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 500, headers: { ...corsHeaders(req), 'Content-Type': 'application/json' } }
     )
   }
 })

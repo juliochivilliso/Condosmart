@@ -4,6 +4,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 // Endpoint server-to-server: lo invoca la Cloud Function de FixSeek.
 // No requiere CORS para navegador.
 
+const ESTADOS_VALIDOS = ['pendiente', 'asignado', 'en_progreso', 'completado', 'rechazado']
+
 serve(async (req) => {
   try {
     const supabase = createClient(
@@ -22,6 +24,14 @@ serve(async (req) => {
     if (!externalId || !status) {
       return new Response(
         JSON.stringify({ error: 'externalId y status son requeridos' }),
+        { status: 400 }
+      )
+    }
+
+    // Validar estado permitido
+    if (!ESTADOS_VALIDOS.includes(status)) {
+      return new Response(
+        JSON.stringify({ error: `Estado inválido: ${status}. Permitidos: ${ESTADOS_VALIDOS.join(', ')}` }),
         { status: 400 }
       )
     }
@@ -48,11 +58,18 @@ serve(async (req) => {
       updated_at: new Date().toISOString(),
     }
 
-    if (professionalName) {
-      update.fixseek_profesional_nombre = professionalName
+    if (professionalName && typeof professionalName === 'string') {
+      update.fixseek_profesional_nombre = professionalName.slice(0, 255)
     }
     if (estimatedCost !== undefined && estimatedCost !== null) {
-      update.costo_estimado = Number(estimatedCost)
+      const costo = Number(estimatedCost)
+      if (Number.isNaN(costo) || costo < 0) {
+        return new Response(
+          JSON.stringify({ error: 'estimatedCost debe ser un número positivo' }),
+          { status: 400 }
+        )
+      }
+      update.costo_estimado = costo
     }
 
     const { error: uErr } = await supabase
