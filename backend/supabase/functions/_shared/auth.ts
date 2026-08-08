@@ -45,6 +45,26 @@ export async function authenticate(req: Request): Promise<AuthResult> {
     throw new AuthError('Missing authorization header', 401)
   }
 
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+
+  // Formato nuevo de Supabase (sb_secret_...): token opaco, no es JWT.
+  // Solo se acepta como service_role si coincide exactamente con la key configurada.
+  if (token.startsWith('sb_secret_')) {
+    if (serviceRoleKey && token === serviceRoleKey) {
+      return {
+        role: 'service_role',
+        userId: null,
+        condominioId: null,
+        supabase: createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          serviceRoleKey,
+          { global: { headers: { Authorization: `Bearer ${token}` } } }
+        ),
+      }
+    }
+    throw new AuthError('Forbidden: service role key inválida', 403)
+  }
+
   const payload = decodeJwtPayload(token)
   const role = (payload.role as string) ?? 'anon'
 
@@ -64,13 +84,54 @@ export async function authenticate(req: Request): Promise<AuthResult> {
 
 /**
  * Exige que la request provenga de un proceso de sistema (service_role / cron).
+ * Acepta: JWT con role service_role, o un token opaco que coincida con
+ * SUPABASE_SERVICE_ROLE_KEY / SUPABASE_SECRET_KEYS (formatos nuevos sb_secret_).
  */
 export async function requireServiceRole(req: Request): Promise<AuthResult> {
-  const auth = await authenticate(req)
-  if (auth.role !== 'service_role') {
+  const token = getToken(req)
+  if (!token) {
+    throw new AuthError('Missing authorization header', 401)
+  }
+
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  const secretKeys = Deno.env.get('SUPABASE_SECRET_KEYS') ?? ''
+
+  // Token opaco (sb_secret_): comparar contra las keys de service role configuradas.
+  if (token.startsWith('sb_secret_')) {
+    const matches =
+      (serviceRoleKey && token === serviceRoleKey) ||
+      secretKeys.split(',').map(s => s.trim()).includes(token)
+    if (matches) {
+      return {
+        role: 'service_role',
+        userId: null,
+        condominioId: null,
+        supabase: createClient(
+          Deno.env.get('SUPABASE_URL') ?? '',
+          serviceRoleKey || token,
+          { global: { headers: { Authorization: `Bearer ${token}` } } }
+        ),
+      }
+    }
+    throw new AuthError('Forbidden: service role key inválida', 403)
+  }
+
+  // JWT: decodificar y validar rol.
+  const payload = decodeJwtPayload(token)
+  if (payload.role !== 'service_role') {
     throw new AuthError('Forbidden: se requiere service role', 403)
   }
-  return auth
+
+  return {
+    role: 'service_role',
+    userId: (payload.sub as string) ?? null,
+    condominioId: null,
+    supabase: createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      serviceRoleKey,
+      { global: { headers: { Authorization: `Bearer ${token}` } } }
+    ),
+  }
 }
 
 /**
