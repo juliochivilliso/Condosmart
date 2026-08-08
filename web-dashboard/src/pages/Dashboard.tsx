@@ -72,9 +72,21 @@ export default function Dashboard() {
           ["mantenimiento","fondo_reserva"].includes(t.tipo_servicio) && t.estado === "pagado"
             ? acc + (Number(t.monto) || 0) : acc, 0)
 
-        const gastos = (txMes ?? []).reduce((acc, t) =>
+        const gastosUtilidades = (txMes ?? []).reduce((acc, t) =>
           ["luz","agua","internet"].includes(t.tipo_servicio)
             ? acc + (Number(t.monto) || 0) : acc, 0)
+
+        // Egresos reales a proveedores pagados este mes
+        const { data: pagosProveedores, error: ppErr } = await supabase
+          .from("cuentas_por_pagar")
+          .select("monto, fecha_pago")
+          .eq("condominio_id", CONDOMINIO_ID)
+          .eq("estado", "pagado")
+          .gte("fecha_pago", primerDiaMes.toISOString().slice(0, 10))
+        if (ppErr) throw ppErr
+
+        const gastosProveedores = (pagosProveedores ?? []).reduce((acc, c) => acc + (Number(c.monto) || 0), 0)
+        const gastos = gastosUtilidades + gastosProveedores
 
         // Tickets abiertos
         const { count: ticketsCount, error: tErr } = await supabase

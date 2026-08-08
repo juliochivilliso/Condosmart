@@ -37,7 +37,8 @@ const estadoBadge: Record<string, string> = {
 export default function Finanzas() {
   const { profile } = useAuth()
   const CONDOMINIO_ID = profile?.condominio_id ?? ''
-  const [transacciones, setTransacciones] = useState<Transaccion[]>([])  
+  const [transacciones, setTransacciones] = useState<Transaccion[]>([])
+  const [gastosProveedores, setGastosProveedores] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -45,6 +46,7 @@ export default function Finanzas() {
     async function fetchData() {
       if (!CONDOMINIO_ID) {
         setTransacciones(SEED_TX)
+        setGastosProveedores(0)
         if (profile?.rol !== 'super_admin') {
           setError("Sin condominio asignado — mostrando datos de demostración.")
         }
@@ -61,6 +63,18 @@ export default function Finanzas() {
           .limit(20)
 
         if (error) throw error
+
+        // Egresos reales a proveedores pagados
+        const { data: cpp, error: cppErr } = await supabase
+          .from("cuentas_por_pagar")
+          .select("monto, estado")
+          .eq("condominio_id", CONDOMINIO_ID)
+          .eq("estado", "pagado")
+        if (cppErr) throw cppErr
+
+        const totalPagosProveedores = (cpp ?? []).reduce((a, c) => a + Number(c.monto), 0)
+        setGastosProveedores(totalPagosProveedores)
+
         if (!data || data.length === 0) {
           setTransacciones(SEED_TX)
           setError("Usando datos de demostración.")
@@ -78,7 +92,8 @@ export default function Finanzas() {
   }, [CONDOMINIO_ID])
 
   const ingresos = transacciones.filter(t => ["mantenimiento","fondo_reserva","sancion"].includes(t.tipo_servicio) && t.estado === "pagado").reduce((a, t) => a + Number(t.monto), 0)
-  const gastos = transacciones.filter(t => ["luz","agua","internet"].includes(t.tipo_servicio)).reduce((a, t) => a + Number(t.monto), 0)
+  const gastosUtilidades = transacciones.filter(t => ["luz","agua","internet"].includes(t.tipo_servicio)).reduce((a, t) => a + Number(t.monto), 0)
+  const gastos = gastosUtilidades + gastosProveedores
   const pendientes = transacciones.filter(t => t.estado === "pendiente").reduce((a, t) => a + Number(t.monto), 0)
   const balance = ingresos - gastos
 
@@ -136,7 +151,7 @@ export default function Finanzas() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-400">${gastos.toLocaleString("es-DO")}</div>
-            <p className="text-xs text-muted-foreground mt-1">Egresos registrados</p>
+            <p className="text-xs text-muted-foreground mt-1">Egresos + proveedores</p>
           </CardContent>
         </Card>
 
